@@ -46,6 +46,7 @@ app.post("/login",(req,res)=>{
 })
 
 
+
 app.post('/home',(req,res) =>{
     const {email,todo} = req.body
     const newTodo = {todo:todo}
@@ -64,6 +65,39 @@ app.post('/home',(req,res) =>{
     .catch(err => res.status(500).json({success:false,message:"Failed to add blog post",error:err}));
 })
 
+app.delete('/home/:email/todo/:todoId', async (req, res) => {
+  const { email, todoId } = req.params;
+
+  if (!email || !todoId) {
+    return res.status(400).json({ success: false, message: "Email and Todo ID are required" });
+  }
+
+  try {
+    const updatedUser = await TodosModel.findOneAndUpdate(
+      { email: email }, // Find user by email
+      { $pull: { todo: { _id: todoId } } }, // Remove todo by _id
+      { new: true } // Return the updated user document
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: "User or Todo not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Todo deleted successfully",
+      updatedUser, // Optionally return the updated user data
+    });
+  } catch (err) {
+    console.error("Error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete todo",
+      error: err.message, // Return the specific error message
+    });
+  }
+});
+
 
 app.get('/home', (req, res) => {
     TodosModel.find()
@@ -78,6 +112,17 @@ app.get('/home', (req, res) => {
         res.status(500).json({ message: 'Server error' });
       });
   });
+
+  app.get('/profile',(req,res) => {
+    TodosModel.find()
+    .then(employees =>{
+      res.json(employees)
+    })
+    .catch(err => {
+      res.status(500).send('Server error')
+    })
+    
+  })
   
 
 
